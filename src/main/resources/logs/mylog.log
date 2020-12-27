@@ -1,0 +1,18 @@
+Dec 27, 2020 2:00:03 PM java.util.logging.LogManager$RootLogger log
+INFO: test
+Dec 27, 2020 3:32:51 PM server.Server main
+INFO: test
+Dec 27, 2020 3:52:02 PM server.Server main
+INFO: Server has started running
+Dec 27, 2020 3:52:14 PM server.MyServer run
+INFO: Client has connected
+Dec 27, 2020 3:52:14 PM server.MyServer run
+INFO: Client  qwe has connected to the network
+Dec 27, 2020 3:52:31 PM server.MyServer run
+INFO: Client has disconnected
+Dec 27, 2020 3:53:08 PM server.MyServer run
+INFO: Client has connected
+Dec 27, 2020 3:53:08 PM server.MyServer run
+WARNING: authentication problem
+Dec 27, 2020 3:53:18 PM server.MyServer run
+INFO: Client has been disconnected

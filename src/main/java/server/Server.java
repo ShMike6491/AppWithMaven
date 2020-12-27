@@ -2,20 +2,33 @@ package server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.*;
 
 public class Server {
     // задаю порт для подключения
     private static final int PORT = 8189;
     // коллекция из всех соединений
     private static List<MyServer> clients;
+    // логирование
+    private static Logger log;
 
     private static Authentication auth;
+
+    static {
+        try(FileInputStream ins = new FileInputStream("src/main/resources/logs/log.properties")){
+            LogManager.getLogManager().readConfiguration(ins);
+            log = Logger.getLogger(Server.class.getName());
+        }catch (Exception ignore){
+            ignore.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         clients = new Vector<>();
@@ -23,7 +36,7 @@ public class Server {
 
         try (ServerSocket server = new ServerSocket(PORT)) {
             // создание сервера
-            System.out.println("Server has started running");
+            log.info("Server has started running");
 
             while (true) {
                 // прикрепление клиента
@@ -101,6 +114,17 @@ class MyServer implements Runnable {
     // вынос за scope для общей видимости всех методов
     DataInputStream in;
     DataOutputStream out;
+    // логирование
+    private static Logger log;
+
+    static {
+        try(FileInputStream ins = new FileInputStream("src/main/resources/logs/log.properties")){
+            LogManager.getLogManager().readConfiguration(ins);
+            log = Logger.getLogger(Server.class.getName());
+        }catch (Exception ignore){
+            ignore.printStackTrace();
+        }
+    }
 
     public MyServer(Socket client) {
         this.client = client;
@@ -111,7 +135,7 @@ class MyServer implements Runnable {
         try {
             in = new DataInputStream(client.getInputStream());
             out = new DataOutputStream(client.getOutputStream());
-            System.out.println("Client has connected");
+            log.info("Client has connected");
 
             client.setSoTimeout(10000);
 
@@ -133,10 +157,11 @@ class MyServer implements Runnable {
                         // добавление клиента в рабочую сеть
                         Server.addConnection(this);
                         Server.clientList();
-                        System.out.println("Client " + nickname + " has connected to the network");
+                        log.info("Client " + nickname + " has connected to the network");
                         break;
                     } else {
                         sendMsg("/authno");
+                        log.warning("authentication problem");
                     }
                 }
 
@@ -144,6 +169,7 @@ class MyServer implements Runnable {
                     String [] token = msg.split("\\s", 4);
                     if(token.length < 4) {
                         sendMsg("/400");
+                        log.warning("unsuccessful attempt to register");
                     } else {
                         boolean isSignedUp = Server.getAuth().register(token[1], token[2], token[3]);
                         if(isSignedUp)
@@ -169,7 +195,7 @@ class MyServer implements Runnable {
                     } else {
                         // поля для обычной отправки сообщений или выхода
                         if (msg.equals("/exit")) {
-                            System.out.println("Client has disconnected");
+                            log.info("Client has disconnected");
                             sendMsg("/exit");
                             Server.removeConnection(this);
                             Server.clientList();
@@ -178,18 +204,18 @@ class MyServer implements Runnable {
                         Server.sendAll(this, msg);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.log(Level.WARNING, "Error occurred during work time", e);
                 }
             }
         } catch (SocketTimeoutException e) {
             try {
-                System.out.println("Client has been disconnected");
+                log.info("Client has been disconnected");
                 client.close();
             } catch (IOException ioException) {
-                ioException.printStackTrace();
+                log.log(Level.WARNING, "Error on socket close", ioException);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.log(Level.WARNING, "Error on client side", e);
         }
     }
 
